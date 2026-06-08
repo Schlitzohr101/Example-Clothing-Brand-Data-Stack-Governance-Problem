@@ -374,9 +374,25 @@ def generate_purchase_orders(cur, skus, supplier_ids, profile: DataProfile):
 # ─── Main ─────────────────────────────────────────────────────────────────────
 
 def reset_schemas(cur):
-    for schema in ("warehouse", "ecommerce", "pos"):
-        cur.execute(f"DROP SCHEMA IF EXISTS {schema} CASCADE")
-        cur.execute(f"CREATE SCHEMA {schema}")
+    # Truncate all tables in one statement — Postgres handles FK ordering automatically.
+    # RESTART IDENTITY resets all serial sequences back to 1.
+    cur.execute("""
+        TRUNCATE
+            warehouse.receipts,
+            warehouse.po_items,
+            warehouse.purchase_orders,
+            warehouse.suppliers,
+            ecommerce.online_items,
+            ecommerce.online_orders,
+            ecommerce.customers,
+            pos.pos_items,
+            pos.inventory,
+            pos.pos_transactions,
+            pos.staff,
+            pos.products,
+            pos.stores
+        RESTART IDENTITY CASCADE
+    """)
 
 
 def main():

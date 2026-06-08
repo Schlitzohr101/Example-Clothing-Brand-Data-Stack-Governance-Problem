@@ -84,8 +84,19 @@ services:
     ports:
       - "19120:19120"
     environment:
-      QUARKUS_DATASOURCE_DB_KIND: h2
-      QUARKUS_DATASOURCE_JDBC_URL: jdbc:h2:mem:nessie;DB_CLOSE_DELAY=-1
+      - QUARKUS_DATASOURCE_DB_KIND=h2
+      - QUARKUS_DATASOURCE_JDBC_URL=jdbc:h2:mem:nessie;DB_CLOSE_DELAY=-1
+      - nessie.catalog.default-warehouse=warehouse
+      - nessie.catalog.warehouses.warehouse.location=s3://lakehouse/
+      - nessie.catalog.service.s3.default-options.region=us-east-1
+      - nessie.catalog.service.s3.default-options.path-style-access=true
+      - nessie.catalog.service.s3.default-options.endpoint=http://minio:9000/
+      - nessie.catalog.service.s3.default-options.access-key=urn:nessie-secret:quarkus:nessie.catalog.secrets.access-key
+      - nessie.catalog.secrets.access-key.name=minioadmin
+      - nessie.catalog.secrets.access-key.secret=minioadmin
+    depends_on:
+      minio:
+        condition: service_healthy
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:19120/api/v1/config"]
       interval: 15s
@@ -245,7 +256,7 @@ services:
       MINIO_URI: http://minio:9000
       MINIO_KEY: minioadmin
       MINIO_SECRET: minioadmin
-      WAREHOUSE: s3://lakehouse/
+      WAREHOUSE: warehouse
     depends_on:
       postgres:
         condition: service_healthy

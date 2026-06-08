@@ -19,16 +19,16 @@ ps:
 
 # Pristine data — no nulls, no drift, no late orders. Good starting point.
 generate-clean:
-	docker compose run --rm --profile jobs generator-clean
+	docker compose --profile jobs run --rm generator-clean
 
 # Dirty data — quality issues baked in (null customer_ids, voided txns, etc.)
 generate-dirty:
-	docker compose run --rm --profile jobs generator-dirty
+	docker compose --profile jobs run --rm generator-dirty
 
 # ─── ELT: Postgres → Iceberg ──────────────────────────────────────────────────
 
 elt:
-	docker compose run --rm --profile jobs elt
+	docker compose --profile jobs run --rm elt
 
 # ─── Full pipelines ───────────────────────────────────────────────────────────
 

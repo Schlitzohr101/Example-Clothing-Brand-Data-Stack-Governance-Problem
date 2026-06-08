@@ -13,8 +13,8 @@ import argparse
 import os
 
 import pandas as pd
-import psycopg2
 import pyarrow as pa
+from sqlalchemy import create_engine
 from pyiceberg.catalog import load_catalog
 from pyiceberg.exceptions import NamespaceAlreadyExistsError, NoSuchTableError
 
@@ -82,10 +82,9 @@ def ensure_namespace(catalog, namespace: str):
 # ─── Load helpers ─────────────────────────────────────────────────────────────
 
 def fetch_table(pg_schema: str, pg_table: str) -> pd.DataFrame:
-    conn = psycopg2.connect(PG_URL)
-    df = pd.read_sql(f'SELECT * FROM "{pg_schema}"."{pg_table}"', conn)
-    conn.close()
-    return df
+    engine = create_engine(PG_URL)
+    with engine.connect() as conn:
+        return pd.read_sql(f'SELECT * FROM "{pg_schema}"."{pg_table}"', conn)
 
 
 def pg_to_arrow(df: pd.DataFrame) -> pa.Table:
