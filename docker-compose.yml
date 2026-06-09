@@ -1,5 +1,3 @@
-version: "3.9"
-
 x-omd-env: &omd-env
   OPENMETADATA_CLUSTER_NAME: meridian
   SERVER_PORT: "8585"
@@ -78,7 +76,7 @@ services:
 
   # ─── Iceberg Catalog ────────────────────────────────────────────────────────
   nessie:
-    image: ghcr.io/projectnessie/nessie:0.92.1
+    image: ghcr.io/projectnessie/nessie:0.107.9
     container_name: meridian-nessie
     restart: unless-stopped
     ports:
@@ -91,9 +89,13 @@ services:
       - nessie.catalog.service.s3.default-options.region=us-east-1
       - nessie.catalog.service.s3.default-options.path-style-access=true
       - nessie.catalog.service.s3.default-options.endpoint=http://minio:9000
-      - nessie.catalog.service.s3.default-options.access-key=minioadmin
-      - nessie.catalog.service.s3.default-options.secret-key=minioadmin
       - nessie.catalog.service.s3.default-options.auth-type=STATIC
+      # Nessie 0.107.x: S3 creds must be referenced via a secret URN; the values
+      # themselves are defined under nessie.catalog.secrets.* (name = access key,
+      # secret = secret key). Inline access-key/secret-key is no longer accepted.
+      - nessie.catalog.service.s3.default-options.access-key=urn:nessie-secret:quarkus:nessie.catalog.secrets.s3-default
+      - nessie.catalog.secrets.s3-default.name=minioadmin
+      - nessie.catalog.secrets.s3-default.secret=minioadmin
     depends_on:
       minio:
         condition: service_healthy

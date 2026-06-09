@@ -88,10 +88,32 @@ def fetch_table(pg_schema: str, pg_table: str) -> pd.DataFrame:
 
 
 def pg_to_arrow(df: pd.DataFrame) -> pa.Table:
-    """Convert pandas DataFrame to Arrow, coercing timestamps to UTC."""
+    """Convert pandas DataFrame to Arrow.
+
+    Timestamps are coerced to UTC and downcast to microsecond precision: pandas
+    produces nanosecond timestamps, but Iceberg only supports microseconds and
+    pyiceberg rejects 'ns' on write. We downcast on the Arrow table so the cast
+    is explicit and independent of the source dtype.
+    """
     for col in df.select_dtypes(include=["datetime64[ns]", "datetime64[ns, UTC]"]).columns:
         df[col] = pd.to_datetime(df[col], utc=True)
-    return pa.Table.from_pandas(df, preserve_index=False)
+
+    table = pa.Table.from_pandas(df, preserve_index=False)
+
+    # Downcast any nanosecond timestamp column to microseconds, preserving tz.
+    new_fields = []
+    cast_needed = False
+    for field in table.schema:
+        if pa.types.is_timestamp(field.type) and field.type.unit == "ns":
+            new_fields.append(field.with_type(pa.timestamp("us", tz=field.type.tz)))
+            cast_needed = True
+        else:
+            new_fields.append(field)
+
+    if cast_needed:
+        table = table.cast(pa.schema(new_fields))
+
+    return table
 
 
 def write_table(catalog, namespace: str, table_name: str, arrow_table: pa.Table):
