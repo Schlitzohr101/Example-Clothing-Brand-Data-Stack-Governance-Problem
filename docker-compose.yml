@@ -90,10 +90,10 @@ services:
       - nessie.catalog.warehouses.warehouse.location=s3://lakehouse/
       - nessie.catalog.service.s3.default-options.region=us-east-1
       - nessie.catalog.service.s3.default-options.path-style-access=true
-      - nessie.catalog.service.s3.default-options.endpoint=http://minio:9000/
-      - nessie.catalog.service.s3.default-options.access-key=urn:nessie-secret:quarkus:nessie.catalog.secrets.access-key
-      - nessie.catalog.secrets.access-key.name=minioadmin
-      - nessie.catalog.secrets.access-key.secret=minioadmin
+      - nessie.catalog.service.s3.default-options.endpoint=http://minio:9000
+      - nessie.catalog.service.s3.default-options.access-key=minioadmin
+      - nessie.catalog.service.s3.default-options.secret-key=minioadmin
+      - nessie.catalog.service.s3.default-options.auth-type=STATIC
     depends_on:
       minio:
         condition: service_healthy
@@ -102,6 +102,7 @@ services:
       interval: 15s
       timeout: 5s
       retries: 10
+
 
   # ─── Query Engine ───────────────────────────────────────────────────────────
   trino:

@@ -96,7 +96,7 @@ def pg_to_arrow(df: pd.DataFrame) -> pa.Table:
 
 def write_table(catalog, namespace: str, table_name: str, arrow_table: pa.Table):
     full_name = f"{namespace}.{table_name}"
-    schema = arrow_table.schema
+    schema = arrow_table.schema.remove_metadata()
 
     try:
         ice_table = catalog.load_table(full_name)
